@@ -21,6 +21,8 @@ long axis_current[3];
 long axis_new[3];
 bool position_updated;
 unsigned long interval = 0;
+unsigned long hb = 0;
+bool hb_state = 1;
 
 void updatePoll(){
   position_updated = 0;
@@ -39,6 +41,7 @@ void updatePoll(){
 }
 
 void printAxes(){
+  //Serial.print( "\r\33[2K\r" );
   for( int i=0; i<3; i++ ){
     Serial.print( axis_current[i] );
     Serial.print( ", " );
@@ -46,12 +49,54 @@ void printAxes(){
   Serial.print("\n");
 }
 
+void heartbeat(){
+  if( millis() - hb > 500 ){
+    digitalWrite( 13, hb_state );
+    hb_state = !hb_state;
+    hb = millis();
+  }
+}
+
+void handle_serial(){
+  if( Serial.available() ){
+    char recvd = Serial.read();
+    switch( recvd ){
+      case 120:         // char x
+        enc0.write( 0 );
+        Serial.println( "X Axis Zeroed" );
+      break;
+      case 121:         // char y
+        enc1.write( 0 );
+        Serial.println( "Y Axis Zeroed" );
+      break;
+      case 122:         // char z
+        enc2.write( 0 );
+        Serial.println( "X Axis Zeroed" );
+      break;
+      default:
+      break;
+    }
+  }
+}
+
 void setup(){
   Serial.begin( 115200 );
-  
+  Serial.println( "ONLINE" );
+  pinMode( 13, OUTPUT );
 }
 
 void loop(){
   updatePoll();
-    
+  handle_serial();
+  
+  if( millis() - interval > 100 ){
+    //printAxes();
+    //Serial.println( enc1.read() );
+    //Serial.print( digitalRead(encoder_1a) );
+    //Serial.print(", ");
+    //Serial.println( digitalRead(encoder_1b) );
+    interval = millis();
+  } 
+
+  heartbeat();
 }
