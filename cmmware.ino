@@ -12,6 +12,9 @@
 #define encoder_2a 22
 #define encoder_2b 23
 
+#define probe 38
+#define probe_led 37
+
 Encoder enc0( encoder_0a, encoder_0b );
 Encoder enc1( encoder_1a, encoder_1b );
 Encoder enc2( encoder_2a, encoder_2b );
@@ -23,6 +26,9 @@ bool position_updated;
 unsigned long interval = 0;
 unsigned long hb = 0;
 bool hb_state = 1;
+
+unsigned long last_probe = 0;
+unsigned long last_release = 0;
 
 void updatePoll(){
   position_updated = 0;
@@ -79,16 +85,35 @@ void handle_serial(){
   }
 }
 
+void handle_probe(){  
+  if( !digitalRead(probe) && millis() - last_release > 100 ){ 
+    printAxes();
+    Serial.println( millis() );
+    digitalWrite( probe_led, 1 ); 
+  }
+  if( !digitalRead(probe) ){ 
+    last_release = millis();
+  }
+  else { 
+    digitalWrite( probe_led, 0 ); 
+    
+  }
+
+}
+
 void setup(){
   Serial.begin( 115200 );
   Serial.println( "ONLINE" );
   pinMode( 13, OUTPUT );
+  pinMode( probe, INPUT );
+  pinMode( probe_led, OUTPUT );
 }
 
 void loop(){
   updatePoll();
   handle_serial();
-  
+  handle_probe();
+
   if( millis() - interval > 100 ){
     //printAxes();
     //Serial.println( enc1.read() );
