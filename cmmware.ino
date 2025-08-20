@@ -3,6 +3,7 @@
 //Allow optimized interrupts, do not use attachIntterrupt to avoid conflict
 //#define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
+#include <usb_keyboard.h>
 
 #define encoder_0a 18
 #define encoder_0b 19
@@ -29,6 +30,8 @@ bool hb_state = 1;
 
 unsigned long last_probe = 0;
 unsigned long last_release = 0;
+
+bool rhino_mode = 0;
 
 void updatePoll(){
   position_updated = 0;
@@ -66,7 +69,11 @@ void heartbeat(){
 void handle_serial(){
   if( Serial.available() ){
     char recvd = Serial.read();
-    switch( recvd ){
+    switch( recvd ){    //char r
+      case 114:
+        rhino_mode = !rhino_mode;
+        Serial.printf( "Rhino Mode %i", rhino_mode );
+      break;
       case 120:         // char x
         enc0.write( 0 );
         Serial.println( "X Axis Zeroed" );
@@ -88,6 +95,9 @@ void handle_serial(){
 void handle_probe(){  
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
     printAxes();
+    if( rhino_mode ){
+      Serial.printf( "point %f, %f, %f\r\n", axis_current[0], axis_current[1], axis_current[2] );
+    }
     Serial.println( millis() );
     digitalWrite( probe_led, 1 ); 
   }
