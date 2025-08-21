@@ -72,7 +72,7 @@ void handle_serial(){
     switch( recvd ){    //char r
       case 114:
         rhino_mode = !rhino_mode;
-        Serial.printf( "Rhino Mode %i", rhino_mode );
+        Serial.printf( "Rhino Mode %i\r\n", rhino_mode );
       break;
       case 120:         // char x
         enc0.write( 0 );
@@ -96,7 +96,7 @@ void handle_probe(){
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
     printAxes();
     if( rhino_mode ){
-      Serial.printf( "point %f, %f, %f\r\n", axis_current[0], axis_current[1], axis_current[2] );
+      Keyboard.printf( "point %f,%f,%f ", axis_current[0], axis_current[1], axis_current[2] );
     }
     Serial.println( millis() );
     digitalWrite( probe_led, 1 ); 
