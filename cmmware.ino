@@ -56,6 +56,7 @@ void printAxes(){
     Serial.print( ", " );
   }
   Serial.print("\n");
+  //Serial.printf( "point %f,%f,%f ", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/1000.0 );
 }
 
 void heartbeat(){
@@ -96,7 +97,7 @@ void handle_probe(){
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
     printAxes();
     if( rhino_mode ){
-      Keyboard.printf( "point %f,%f,%f ", axis_current[0], axis_current[1], axis_current[2] );
+      Keyboard.printf( "point %f,%f,%f ", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/1000.0 );
     }
     Serial.println( millis() );
     digitalWrite( probe_led, 1 ); 
