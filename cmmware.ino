@@ -79,6 +79,9 @@ void handle_serial(){
   if( Serial.available() ){
     char recvd = Serial.read();
     switch( recvd ){
+      case 63:
+        printCommands();
+      break;
       case 101:         //char e
         keyboard_mode = excel_mode;
         Serial.println( "Mode: Excel");
@@ -137,9 +140,18 @@ void handle_probe(){
 
 }
 
+void printCommands(){
+  Serial.println( "Commands:");
+  Serial.println( "x / y / z - Zero named axis" );
+  Serial.println( "r - Rhino mode" );
+  Serial.println( "e - Excel mode" );
+  Serial.println( "n - Cancel keyboard mode" );
+}
+
 void setup(){
   Serial.begin( 115200 );
   Serial.println( "ONLINE" );
+  printCommands();  
   pinMode( 13, OUTPUT );
   pinMode( probe, INPUT );
   pinMode( probe_led, OUTPUT );
