@@ -23,6 +23,7 @@ Encoder * enc_array[]{ &enc0, &enc1, &enc2 };
 
 long axis_current[3];
 long axis_new[3];
+long axis_probe[3];
 bool position_updated;
 unsigned long interval = 0;
 unsigned long hb = 0;
@@ -31,7 +32,12 @@ bool hb_state = 1;
 unsigned long last_probe = 0;
 unsigned long last_release = 0;
 
-bool rhino_mode = 0;
+enum keyboard_modes {
+  rhino_mode,
+  excel_mode,
+  none
+};
+enum keyboard_modes keyboard_mode = none;
 
 void updatePoll(){
   position_updated = 0;
@@ -51,12 +57,14 @@ void updatePoll(){
 
 void printAxes(){
   //Serial.print( "\r\33[2K\r" );
+  /*
   for( int i=0; i<3; i++ ){
     Serial.print( axis_current[i] );
     Serial.print( ", " );
   }
   Serial.print("\n");
-  //Serial.printf( "point %f,%f,%f ", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/1000.0 );
+  */
+  Serial.printf( "%f,%f,%f\r\n", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/1000.0 );
 }
 
 void heartbeat(){
@@ -70,10 +78,18 @@ void heartbeat(){
 void handle_serial(){
   if( Serial.available() ){
     char recvd = Serial.read();
-    switch( recvd ){    //char r
-      case 114:
-        rhino_mode = !rhino_mode;
-        Serial.printf( "Rhino Mode %i\r\n", rhino_mode );
+    switch( recvd ){
+      case 101:         //char e
+        keyboard_mode = excel_mode;
+        Serial.println( "Mode: Excel");
+      break;
+      case 110:         //char n
+        keyboard_mode = none;
+        Serial.println( "Mode: None" );
+      break;
+      case 114:         //char r
+        keyboard_mode = rhino_mode;
+        Serial.println( "Mode: Rhino" );
       break;
       case 120:         // char x
         enc0.write( 0 );
@@ -85,7 +101,7 @@ void handle_serial(){
       break;
       case 122:         // char z
         enc2.write( 0 );
-        Serial.println( "X Axis Zeroed" );
+        Serial.println( "Z Axis Zeroed" );
       break;
       default:
       break;
@@ -93,11 +109,20 @@ void handle_serial(){
   }
 }
 
+void probe_interrupt(){
+  for( int i=0; i<3; i++ ){
+    axis_probe[i] = enc_array[i]->read();
+  }
+}
+
 void handle_probe(){  
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
     printAxes();
-    if( rhino_mode ){
-      Keyboard.printf( "point %f,%f,%f ", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/1000.0 );
+    if( keyboard_mode == rhino_mode ){
+      Keyboard.printf( "point %f,%f,%f ", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/100.0 );
+    }
+    if( keyboard_mode == excel_mode ){
+        Keyboard.printf( "%f\t%f\t%f\r\n", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/100.0 );
     }
     Serial.println( millis() );
     digitalWrite( probe_led, 1 ); 
