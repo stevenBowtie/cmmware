@@ -32,6 +32,7 @@ bool hb_state = 1;
 unsigned long last_probe = 0;
 unsigned long last_release = 0;
 
+bool dro_mode = 0;
 enum keyboard_modes {
   rhino_mode,
   excel_mode,
@@ -48,23 +49,12 @@ void updatePoll(){
       position_updated = 1;
     }
   }
-  if( position_updated ){ printAxes(); }
-  if( digitalRead(encoder_0z) ){ 
-      Serial.print( "Z" );
-      Serial.println( millis() ); 
-  }
+  if( position_updated ){ print_dro(); }
 }
 
-void printAxes(){
-  //Serial.print( "\r\33[2K\r" );
-  /*
-  for( int i=0; i<3; i++ ){
-    Serial.print( axis_current[i] );
-    Serial.print( ", " );
-  }
-  Serial.print("\n");
-  */
-  Serial.printf( "%f,%f,%f\r\n", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/1000.0 );
+void print_dro(){
+  Serial.print( "\r\33[2K\r" );
+  Serial.printf( "%f,%f,%f\r\n", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/100.0 );
 }
 
 void heartbeat(){
@@ -81,6 +71,9 @@ void handle_serial(){
     switch( recvd ){
       case 63:
         printCommands();
+      break;
+      case 100:         //char d
+        dro_mode = !dro_mode;
       break;
       case 101:         //char e
         keyboard_mode = excel_mode;
@@ -120,14 +113,16 @@ void probe_interrupt(){
 
 void handle_probe(){  
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
-    printAxes();
+    for( int i=0; i<3; i++ ){
+      axis_probe[i] = enc_array[i]->read();
+    }
+    Serial.printf( "* %f,%f,%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     if( keyboard_mode == rhino_mode ){
-      Keyboard.printf( "point %f,%f,%f ", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/100.0 );
+      Keyboard.printf( "point %f,%f,%f ", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     }
     if( keyboard_mode == excel_mode ){
-        Keyboard.printf( "%f\t%f\t%f\r\n", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/100.0 );
+        Keyboard.printf( "%f\t%f\t%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     }
-    Serial.println( millis() );
     digitalWrite( probe_led, 1 ); 
   }
   if( !digitalRead(probe) ){ 
@@ -158,7 +153,7 @@ void setup(){
 }
 
 void loop(){
-  updatePoll();
+  if( dro_mode ){ updatePoll(); }
   handle_serial();
   handle_probe();
 
