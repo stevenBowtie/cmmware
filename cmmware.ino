@@ -15,6 +15,7 @@
 
 #define probe 38
 #define probe_led 37
+#define beep 24
 
 Encoder enc0( encoder_0a, encoder_0b );
 Encoder enc1( encoder_1a, encoder_1b );
@@ -112,10 +113,12 @@ void probe_interrupt(){
 }
 
 void handle_probe(){  
+  //Debounce input and handle printing
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
     for( int i=0; i<3; i++ ){
       axis_probe[i] = enc_array[i]->read();
     }
+    tone( beep, 3000, 100 );
     Serial.printf( "* %f,%f,%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     if( keyboard_mode == rhino_mode ){
       Keyboard.printf( "point %f,%f,%f ", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
@@ -123,10 +126,10 @@ void handle_probe(){
     if( keyboard_mode == excel_mode ){
         Keyboard.printf( "%f\t%f\t%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     }
-    digitalWrite( probe_led, 1 ); 
   }
   if( !digitalRead(probe) ){ 
     last_release = millis();
+    digitalWrite( probe_led, 1 );
   }
   else { 
     digitalWrite( probe_led, 0 ); 
@@ -150,6 +153,7 @@ void setup(){
   pinMode( 13, OUTPUT );
   pinMode( probe, INPUT );
   pinMode( probe_led, OUTPUT );
+  pinMode( beep, OUTPUT);
 }
 
 void loop(){
