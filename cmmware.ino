@@ -89,15 +89,15 @@ void handle_serial(){
         Serial.println( "Mode: Rhino" );
       break;
       case 120:         // char x
-        enc0.write( 0 );
+        enc0.write( enc0.read() - axis_probe[0] );
         Serial.println( "X Axis Zeroed" );
       break;
       case 121:         // char y
-        enc1.write( 0 );
+        enc1.write( enc1.read() - axis_probe[1] );
         Serial.println( "Y Axis Zeroed" );
       break;
       case 122:         // char z
-        enc2.write( 0 );
+        enc2.write( enc2.read() - axis_probe[2] );
         Serial.println( "Z Axis Zeroed" );
       break;
       default:
