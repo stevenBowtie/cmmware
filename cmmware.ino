@@ -127,13 +127,17 @@ void handle_probe(){
         Keyboard.printf( "%f\t%f\t%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     }
   }
+  if( digitalRead(probe) && millis() - last_release > 100 ){ 
+    tone( beep, 2000, 100 );
+    last_touch = millis();
+  }
   if( !digitalRead(probe) ){ 
     last_release = millis();
     digitalWrite( probe_led, 1 );
   }
   else { 
     digitalWrite( probe_led, 0 ); 
-    
+    last_touch = millis();
   }
 
 }
