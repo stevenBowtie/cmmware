@@ -8,10 +8,10 @@
 #define encoder_0a 18
 #define encoder_0b 19
 #define encoder_0z 17
-#define encoder_1a 20
-#define encoder_1b 21
-#define encoder_2a 22
-#define encoder_2b 23
+#define encoder_1a 21
+#define encoder_1b 20
+#define encoder_2a 23
+#define encoder_2b 22
 
 #define probe 38
 #define probe_led 37
