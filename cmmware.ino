@@ -1,7 +1,7 @@
 //Written for the Teensy 3.5
 
 //Allow optimized interrupts, do not use attachIntterrupt to avoid conflict
-//#define ENCODER_OPTIMIZE_INTERRUPTS
+#define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
 #include <usb_keyboard.h>
 
@@ -34,6 +34,7 @@ unsigned long last_probe = 0;
 unsigned long last_release = 0;
 
 bool dro_mode = 0;
+unsigned long last_dro = 0;
 enum keyboard_modes {
   rhino_mode,
   excel_mode,
@@ -42,15 +43,18 @@ enum keyboard_modes {
 enum keyboard_modes keyboard_mode = none;
 
 void updatePoll(){
-  position_updated = 0;
-  for( int i=0; i<3; i++ ){
-    axis_new[i] = enc_array[i]->read();
-    if( axis_new[i] != axis_current[i] ){
-      axis_current[i] = axis_new[i];
-      position_updated = 1;
+  if( millis() - last_dro > 100 ){
+    position_updated = 0;
+    for( int i=0; i<3; i++ ){
+      axis_new[i] = enc_array[i]->read();
+      if( axis_new[i] != axis_current[i] ){
+        axis_current[i] = axis_new[i];
+        position_updated = 1;
+      }
     }
+    if( position_updated ){ print_dro(); }
+    last_dro = millis();
   }
-  if( position_updated ){ print_dro(); }
 }
 
 void print_dro(){
@@ -83,6 +87,9 @@ void handle_serial(){
       case 110:         //char n
         keyboard_mode = none;
         Serial.println( "Mode: None" );
+      break;
+      case 112:         //char p
+        print_dro();
       break;
       case 114:         //char r
         keyboard_mode = rhino_mode;
@@ -144,6 +151,8 @@ void handle_probe(){
 
 void printCommands(){
   Serial.println( "Commands:");
+  Serial.println( "p - Print current position");
+  Serial.println( "d - Toggle DRO Mode");
   Serial.println( "x / y / z - Zero named axis" );
   Serial.println( "r - Rhino mode" );
   Serial.println( "e - Excel mode" );
