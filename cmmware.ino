@@ -8,10 +8,10 @@
 #define encoder_0a 18
 #define encoder_0b 19
 #define encoder_0z 17
-#define encoder_1a 20
-#define encoder_1b 21
-#define encoder_2a 22
-#define encoder_2b 23
+#define encoder_1a 21
+#define encoder_1b 20
+#define encoder_2a 23
+#define encoder_2b 22
 
 #define probe 38
 #define probe_led 37
@@ -32,6 +32,7 @@ bool hb_state = 1;
 
 unsigned long last_probe = 0;
 unsigned long last_release = 0;
+unsigned long last_touch = 0;
 
 bool dro_mode = 0;
 unsigned long last_dro = 0;
@@ -125,17 +126,24 @@ void handle_probe(){
     for( int i=0; i<3; i++ ){
       axis_probe[i] = enc_array[i]->read();
     }
-    tone( beep, 3000, 100 );
+    tone( beep, 4000, 100 );
     Serial.printf( "* %f,%f,%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     if( keyboard_mode == rhino_mode ){
       Keyboard.printf( "point %f,%f,%f ", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     }
     if( keyboard_mode == excel_mode ){
-        Keyboard.printf( "%f\t%f\t%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
+        //Keyboard.printf( "%f\t%f\t%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
+        Keyboard.print( axis_probe[0]/1000.0 );
+        Keyboard.press(KEY_TAB); 
+	      Keyboard.release(KEY_TAB);
+        Keyboard.print( axis_probe[1]/1000.0 );
+        Keyboard.press(KEY_TAB); 
+	      Keyboard.release(KEY_TAB);
+        Keyboard.println( axis_probe[2]/100.0 );
     }
   }
-  if( digitalRead(probe) && millis() - last_release > 100 ){ 
-    tone( beep, 2000, 100 );
+  if( digitalRead(probe) && millis() - last_touch > 100 ){ 
+    tone( beep, 3000, 100 );
     last_touch = millis();
   }
   if( !digitalRead(probe) ){ 
@@ -153,10 +161,11 @@ void printCommands(){
   Serial.println( "Commands:");
   Serial.println( "p - Print current position");
   Serial.println( "d - Toggle DRO Mode");
-  Serial.println( "x / y / z - Zero named axis" );
+  Serial.println( "x / y / z - Zero named axis to last probe hit" );
   Serial.println( "r - Rhino mode" );
   Serial.println( "e - Excel mode" );
   Serial.println( "n - Cancel keyboard mode" );
+  Serial.println( "d - DRO prints" );
 }
 
 void setup(){
