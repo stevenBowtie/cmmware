@@ -1,9 +1,13 @@
 //Written for the Teensy 3.5
 
 //Allow optimized interrupts, do not use attachIntterrupt to avoid conflict
-#define ENCODER_OPTIMIZE_INTERRUPTS
+//#define ENCODER_OPTIMIZE_INTERRUPTS
+#define ENCODER_USE_INTERRUPTS
+
 #include <Encoder.h>
 #include <usb_keyboard.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
 
 #define encoder_0a 18
 #define encoder_0b 19
@@ -13,7 +17,7 @@
 #define encoder_2a 23
 #define encoder_2b 22
 
-#define probe 38
+#define probe 38        //PTC11
 #define probe_led 37
 #define beep 24
 
@@ -60,7 +64,7 @@ void updatePoll(){
 
 void print_dro(){
   Serial.print( "\r\33[2K\r" );
-  Serial.printf( "%f,%f,%f\r\n", axis_current[0]/1000.0, axis_current[1]/1000.0, axis_current[2]/100.0 );
+  Serial.printf( "%f,%f,%f\r\n", enc_array[0]->read()/1000.0, enc_array[1]->read()/1000.0, enc_array[2]->read()/100.0 );
 }
 
 void heartbeat(){
@@ -123,9 +127,9 @@ void probe_interrupt(){
 void handle_probe(){  
   //Debounce input and handle printing
   if( !digitalRead(probe) && millis() - last_release > 100 ){ 
-    for( int i=0; i<3; i++ ){
-      axis_probe[i] = enc_array[i]->read();
-    }
+    // for( int i=0; i<3; i++ ){
+    //   axis_probe[i] = enc_array[i]->read();
+    // }
     tone( beep, 4000, 100 );
     Serial.printf( "* %f,%f,%f\r\n", axis_probe[0]/1000.0, axis_probe[1]/1000.0, axis_probe[2]/100.0 );
     if( keyboard_mode == rhino_mode ){
@@ -176,6 +180,7 @@ void setup(){
   pinMode( probe, INPUT );
   pinMode( probe_led, OUTPUT );
   pinMode( beep, OUTPUT);
+  attachInterrupt( probe, probe_interrupt, FALLING );
 }
 
 void loop(){
